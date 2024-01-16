@@ -58,6 +58,7 @@ public class ApplicationExceptionHandler extends ResponseEntityExceptionHandler{
 		return structure(HttpStatus.BAD_REQUEST, ex.getMessage(), "Duplicate Entry");
 	}
 	
+	@ExceptionHandler(UserNotFoundById.class)
 	public ResponseEntity<Object> handlerUserNotFoundById(UserNotFoundById ex){
 		return structure(HttpStatus.OK, ex.getMessage(), "UserNotFound");
 	}

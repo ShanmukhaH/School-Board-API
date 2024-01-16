@@ -21,12 +21,12 @@ public class UserServiceImpl implements UserService {
 
 	@Autowired
 	private UserRepoistory userRepoistory;
-	
+
 	@Autowired
 	private ResponseStructure<UserResponse> structure;
-	
+
 	static boolean admini=false;
-	
+
 	public User mapToUser(UserRequest userRequest) {
 		return User.builder()
 				.userName(userRequest.getUserName())
@@ -38,7 +38,7 @@ public class UserServiceImpl implements UserService {
 				.userRole(userRequest.getUserRole())
 				.build();
 	}
-	
+
 	public UserResponse mapToUserResponse(User user) {
 		return UserResponse.builder()
 				.userId(user.getUserId())
@@ -48,67 +48,53 @@ public class UserServiceImpl implements UserService {
 				.contactNo(user.getContactNo())
 				.email(user.getEmail())
 				.userRole(user.getUserRole())
+				.isDeleted(admini)
 				.build();
 	}
-	
+
 	@Override
 	public ResponseEntity<ResponseStructure<UserResponse>> saveUser(UserRequest userRequest) {
-		 
-		if(userRequest.getUserRole()==UserRole.ADMIN) {
-			if(admini==false) {
-				admini=true;
-				try {
-					User user = userRepoistory.save(mapToUser(userRequest));
-				    structure.setStatus(HttpStatus.CREATED.value());
-				    structure.setMessage("User Data Saved Sucessfully");
-				    structure.setData(mapToUserResponse(user));
-				
-			}
-				catch(Exception ex) {
-					throw new DuplicateEntryException("Change UserName and Email");
-				}
-				
+
+
+		User user = mapToUser(userRequest);
+		if(user.getUserRole()==UserRole.ADMIN&&userRepoistory.existsByUserRole(UserRole.ADMIN)) {
+			
+			structure.setStatus(HttpStatus.BAD_REQUEST.value());
+			structure.setMessage("There should be only one ADMIN to the application");
+			return new ResponseEntity<ResponseStructure<UserResponse>>(structure,HttpStatus.BAD_REQUEST);
+		
 		}
-			else {
-				throw new InvalidUserException("Only one Admini Can Be Allowed");
-			}
-		}
-		else {
-				try {
-					User user = userRepoistory.save(mapToUser(userRequest));
-				    structure.setStatus(HttpStatus.CREATED.value());
-				    structure.setMessage("User Data Saved Sucessfully");
-				    structure.setData(mapToUserResponse(user));
-				}
-				catch(Exception ex) {
-				
-					throw new DuplicateEntryException("Change UserName and Email");
-				}
-			}
-	
+
+		userRepoistory.save(user);
+		structure.setStatus(HttpStatus.CREATED.value());
+		structure.setMessage("User Data Saved Sucessfully");
+		structure.setData(mapToUserResponse(user));
+		
 		return new ResponseEntity<ResponseStructure<UserResponse>>(structure,HttpStatus.CREATED);
 
-}
+	}
 
 	@Override
 	public ResponseEntity<ResponseStructure<UserResponse>> deleteUser(int userId) {
-		
+
 		User user = userRepoistory.findById(userId).orElseThrow(()->new UserNotFoundById("User Not Found By id"));
+
+		if(user.isDeleted()==false)
 		user.setDeleted(true);
 		userRepoistory.save(user);
-		
+
 		structure.setStatus(HttpStatus.FOUND.value());
 		structure.setMessage("User Data Delete");
 		structure.setData(mapToUserResponse(user));
-		
-		
+
+
 		return new ResponseEntity<ResponseStructure<UserResponse>>(structure,HttpStatus.OK);
 	}
 
 	@Override
 	public ResponseEntity<ResponseStructure<UserResponse>> getUserByid(int userId) {
 		User user = userRepoistory.findById(userId).orElseThrow(()->new UserNotFoundById("User Not Found"));
-		
+
 		structure.setStatus(HttpStatus.FOUND.value());
 		structure.setMessage("User Data Found");
 		structure.setData(mapToUserResponse(user));
