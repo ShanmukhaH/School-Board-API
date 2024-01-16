@@ -1,12 +1,11 @@
 package com.school.sba.exception;
 
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 
-@Data
+@Getter
 @AllArgsConstructor
-public class SchoolNotFoundByIdException extends RuntimeException {
+public class UserNotFoundById extends RuntimeException {
 
 	private String message;
-	
 }

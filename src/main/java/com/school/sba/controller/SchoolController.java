@@ -17,18 +17,6 @@ public class SchoolController {
 	@Autowired
 	private SchoolService schoolService;
 	
-	@PostMapping("/addschool")
-	public ResponseEntity<ResponseStructure<School>> addSchool(@RequestBody School school){
-		return schoolService.addSchool(school);
-	}
 	
-	@GetMapping("/findSchool")
-	public ResponseEntity<ResponseStructure<School>> findSchoolById(@RequestBody School school){
-		return schoolService.findSchoolById(school);
-	}
-	@GetMapping("/AllSchool")
-	public ResponseEntity<ResponseStructure<School>> findAllSchool(){
-		return schoolService.findAllSchool();
-	}
 	
 }
