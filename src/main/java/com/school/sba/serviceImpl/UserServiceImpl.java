@@ -3,13 +3,16 @@ package com.school.sba.serviceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.school.sba.entity.Subject;
 import com.school.sba.entity.User;
 import com.school.sba.enums.UserRole;
-import com.school.sba.exception.DuplicateEntryException;
 import com.school.sba.exception.InvalidUserException;
-import com.school.sba.exception.UserNotFoundById;
+import com.school.sba.exception.SubjectNotFoundByIdException;
+import com.school.sba.exception.UserNotFoundByIdException;
+import com.school.sba.repoistory.SubjectRepoistory;
 import com.school.sba.repoistory.UserRepoistory;
 import com.school.sba.requestdto.UserRequest;
 import com.school.sba.responsedto.UserResponse;
@@ -21,16 +24,20 @@ public class UserServiceImpl implements UserService {
 
 	@Autowired
 	private UserRepoistory userRepoistory;
+	
+	@Autowired
+	private SubjectRepoistory subjectRepoistory;
 
 	@Autowired
 	private ResponseStructure<UserResponse> structure;
 
-	static boolean admini=false;
+	@Autowired
+	private PasswordEncoder encoder;
 
 	public User mapToUser(UserRequest userRequest) {
 		return User.builder()
 				.userName(userRequest.getUserName())
-				.password(userRequest.getPassword())
+				.password(encoder.encode(userRequest.getPassword()))
 				.firstName(userRequest.getFirstName())
 				.lastName(userRequest.getLastName())
 				.contactNo(userRequest.getContactNo())
@@ -48,7 +55,6 @@ public class UserServiceImpl implements UserService {
 				.contactNo(user.getContactNo())
 				.email(user.getEmail())
 				.userRole(user.getUserRole())
-				.isDeleted(admini)
 				.build();
 	}
 
@@ -77,7 +83,7 @@ public class UserServiceImpl implements UserService {
 	@Override
 	public ResponseEntity<ResponseStructure<UserResponse>> deleteUser(int userId) {
 
-		User user = userRepoistory.findById(userId).orElseThrow(()->new UserNotFoundById("User Not Found By id"));
+		User user = userRepoistory.findById(userId).orElseThrow(()->new UserNotFoundByIdException("User Not Found By id"));
 
 		if(user.isDeleted()==false)
 		user.setDeleted(true);
@@ -93,11 +99,34 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	public ResponseEntity<ResponseStructure<UserResponse>> getUserByid(int userId) {
-		User user = userRepoistory.findById(userId).orElseThrow(()->new UserNotFoundById("User Not Found"));
+		User user = userRepoistory.findById(userId).orElseThrow(()->new UserNotFoundByIdException("User Not Found"));
 
 		structure.setStatus(HttpStatus.FOUND.value());
 		structure.setMessage("User Data Found");
 		structure.setData(mapToUserResponse(user));
 		return new ResponseEntity<ResponseStructure<UserResponse>>(structure,HttpStatus.FOUND);
 	}
-}
+
+	@Override
+	public ResponseEntity<ResponseStructure<UserResponse>> addSubjectToTeacher(int userId, int subjectId) {
+		
+		User user = userRepoistory.findById(userId).orElseThrow(()->new UserNotFoundByIdException("User not Found For given Id"));
+		Subject subject = subjectRepoistory.findById(subjectId).orElseThrow(()->new SubjectNotFoundByIdException("Subjects Not Found For given id"));
+		
+		if(user.getUserRole().equals(UserRole.TEACHER)) {
+			
+			user.setSubject(subject);
+			userRepoistory.save(user);
+			structure.setStatus(HttpStatus.CREATED.value());
+			structure.setMessage("upadted Sucesfully");
+			structure.setData(mapToUserResponse(user));
+			return new ResponseEntity<ResponseStructure<UserResponse>>(structure,HttpStatus.CREATED);
+		}else {
+			throw new InvalidUserException("Invalid User");
+		}
+		
+	
+	}
+	}
+	
+

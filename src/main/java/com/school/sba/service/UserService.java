@@ -14,4 +14,6 @@ public interface UserService {
 
 	ResponseEntity<ResponseStructure<UserResponse>> getUserByid(int userId);
 
+	ResponseEntity<ResponseStructure<UserResponse>> addSubjectToTeacher(int userId, int subjectId);
+
 }

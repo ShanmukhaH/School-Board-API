@@ -1,12 +1,15 @@
 package com.school.sba.entity;
 
+import java.time.Duration;
 import java.time.LocalTime;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToOne;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -14,6 +17,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class Schedule {
 
 	@Id
@@ -22,10 +26,10 @@ public class Schedule {
 	private LocalTime opensAt;
 	private LocalTime closesAt;
 	private int classHoursPerDay;
-	private LocalTime classHourLength;
+	private Duration classHourLengthInMinutes;
 	private LocalTime breakTime;
-	private LocalTime breakLength;
+	private Duration breakLengthInMinutes;
 	private LocalTime lunchTime;
-	private LocalTime lunchLength;
+	private Duration lunchLengthInMinutes;
 	
 }

@@ -1,12 +1,18 @@
 package com.school.sba.entity;
 
+import java.util.List;
+
 import com.school.sba.enums.UserRole;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -30,7 +36,17 @@ public class User {
 	private long contactNo;
 	@Column(unique = true)
 	private String email;
+//	@Enumerated(EnumType.STRING)
 	private UserRole userRole;
 	private boolean isDeleted;
+	
+	@ManyToOne
+	private School school;
+	
+	@ManyToMany(mappedBy = "users")
+	private List<AcademicProgram> programs;
+	
+	@ManyToOne
+	private Subject subject;
 	
 }
