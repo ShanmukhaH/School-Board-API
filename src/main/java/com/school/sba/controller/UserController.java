@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.school.sba.requestdto.UserRequest;
@@ -25,10 +26,22 @@ public class UserController {
 	@Autowired
 	private UserService userService;
 	
+	
 	@PostMapping("/users/register")
-	public ResponseEntity<ResponseStructure<UserResponse>> saveUser(@RequestBody @Valid UserRequest userRequest){
-		return userService.saveUser(userRequest); 
+	public ResponseEntity<ResponseStructure<UserResponse>> registerAdmin(@RequestBody UserRequest userRequest){
+		return userService.registerAdmin(userRequest);
 	}
+	
+	@PreAuthorize("hasAuthority('ADMIN')")
+	@PostMapping("/users")
+	public ResponseEntity<ResponseStructure<UserResponse>> addOtherUser(@RequestBody UserRequest userRequest){
+		return userService.addOtherUser(userRequest);
+	}
+	
+//	@PostMapping("/users/register")
+//	public ResponseEntity<ResponseStructure<UserResponse>> saveUser(@RequestBody @Valid UserRequest userRequest){
+//		return userService.saveUser(userRequest); 
+//	}
 	
 	@PreAuthorize("hasAuthority('ADMIN')")
 	@DeleteMapping("/users/{userId}")
@@ -40,7 +53,7 @@ public class UserController {
 	public ResponseEntity<ResponseStructure<UserResponse>> getUserById(@PathVariable int userId){
 		return userService.getUserByid(userId);
 	}
-	
+	@PreAuthorize("hasAuthority('ADMIN')")
 	@PutMapping("subjects/{subjectId}/users/{userId}")
 	public ResponseEntity<ResponseStructure<UserResponse>> addSubjectToTeacher(@PathVariable int userId,@PathVariable int subjectId){
 		return userService.addSubjectToTeacher(userId,subjectId);

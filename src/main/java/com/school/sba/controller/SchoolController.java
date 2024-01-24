@@ -20,9 +20,9 @@ public class SchoolController {
 	private SchoolService schoolService;
 	
 	@PreAuthorize("hasAuthority('ADMIN')")
-	@PostMapping("/users/{userId}/schools")
-	public ResponseEntity<ResponseStructure<SchoolResponse>> saveSchool(@RequestBody SchoolRequest schoolRequest,@PathVariable int userId){
-		return schoolService.saveSchool(schoolRequest,userId);
+	@PostMapping("/schools")
+	public ResponseEntity<ResponseStructure<SchoolResponse>> saveSchool(@RequestBody SchoolRequest schoolRequest){
+		return schoolService.saveSchool(schoolRequest);
 	}
 	
 }

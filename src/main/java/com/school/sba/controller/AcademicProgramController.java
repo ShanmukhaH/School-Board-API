@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -24,6 +25,7 @@ public class AcademicProgramController {
 	@Autowired
     private AcademicProgramService academicProgramService;
 	
+	@PreAuthorize("hasAuthority('ADMIN')")
 	@PostMapping("/schools/{schoolId}/academic-programs")
 	public ResponseEntity<ResponseStructure<AcademicProgramResponse>> createAcademicProgram(@RequestBody AcademicProgramRequest programRequest,@PathVariable int schoolId){
 		return academicProgramService.createAcademicProgram(programRequest,schoolId);
@@ -33,7 +35,7 @@ public class AcademicProgramController {
 	public ResponseEntity<ResponseStructure<List<AcademicProgramResponse>>> findAllAcademicProgram(@PathVariable int schoolId){
 		return academicProgramService.findAllAcademicProgram(schoolId);
 	}
-	
+	@PreAuthorize("hasAuthority('ADMIN')")
 	@PutMapping("/academic-programs/{programId}/users/{userId}")
 	public ResponseEntity<ResponseStructure<AcademicProgramResponse>> addUsersToProgram(@PathVariable int programId,@PathVariable int userId){
 		return academicProgramService.addUsersToprogram(programId,userId);

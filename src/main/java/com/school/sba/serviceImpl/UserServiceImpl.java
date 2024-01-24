@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import com.school.sba.entity.Subject;
 import com.school.sba.entity.User;
 import com.school.sba.enums.UserRole;
+import com.school.sba.exception.DuplicateEntryException;
 import com.school.sba.exception.InvalidUserException;
 import com.school.sba.exception.SubjectNotFoundByIdException;
 import com.school.sba.exception.UserNotFoundByIdException;
@@ -59,7 +60,7 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
-	public ResponseEntity<ResponseStructure<UserResponse>> saveUser(UserRequest userRequest) {
+	public ResponseEntity<ResponseStructure<UserResponse>> registerAdmin(UserRequest userRequest) {
 
 
 		User user = mapToUser(userRequest);
@@ -78,6 +79,25 @@ public class UserServiceImpl implements UserService {
 		
 		return new ResponseEntity<ResponseStructure<UserResponse>>(structure,HttpStatus.CREATED);
 
+	}
+	
+	@Override
+	public ResponseEntity<ResponseStructure<UserResponse>> addOtherUser(UserRequest userRequest) 
+	{
+		User user = mapToUser(userRequest);
+		
+		if(user.getUserRole().equals(UserRole.TEACHER) || user.getUserRole().equals(UserRole.STUDENT))
+		{
+			userRepoistory.save(user);
+			structure.setStatus(HttpStatus.CREATED.value());
+			structure.setMessage("User Data Saved Sucessfully");
+			structure.setData(mapToUserResponse(user));
+			
+			return new ResponseEntity<ResponseStructure<UserResponse>>(structure,HttpStatus.CREATED);
+		}
+		else
+			throw new InvalidUserException("Unable to save user, Invalid user role");
+	
 	}
 
 	@Override
@@ -125,7 +145,6 @@ public class UserServiceImpl implements UserService {
 			throw new InvalidUserException("Invalid User");
 		}
 		
-	
 	}
 	}
 	
