@@ -1,6 +1,6 @@
 package com.school.sba.requestdto;
 
-import java.time.LocalTime;
+import java.time.LocalDate;
 
 import com.school.sba.enums.ProgramType;
 
@@ -10,15 +10,15 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@Setter
 @Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class AcademicProgramRequest {
 
 	private String programName;
-	private LocalTime beginsAt;
-	private LocalTime endsAt;
+	private LocalDate beginsAt;
+	private LocalDate endsAt;
 	private ProgramType programType;
 }

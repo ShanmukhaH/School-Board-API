@@ -13,6 +13,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -36,7 +37,7 @@ public class User {
 	private long contactNo;
 	@Column(unique = true)
 	private String email;
-//	@Enumerated(EnumType.STRING)
+	@Enumerated(EnumType.STRING)
 	private UserRole userRole;
 	private boolean isDeleted;
 	
@@ -48,5 +49,8 @@ public class User {
 	
 	@ManyToOne
 	private Subject subject;
+	
+//	@OneToMany
+//	private List<ClassHour> classHours;
 	
 }

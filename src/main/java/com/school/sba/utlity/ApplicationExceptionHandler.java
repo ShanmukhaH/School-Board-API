@@ -17,17 +17,22 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
+import com.school.sba.exception.AcademicProgramNotExistsByIdException;
 import com.school.sba.exception.AcademicProgramNotFoundById;
 import com.school.sba.exception.AdminCannotAssiginToAcademicProgram;
 import com.school.sba.exception.AdminiNotFoundByUserRoleException;
+import com.school.sba.exception.ClasshourNotFoundByIdException;
 import com.school.sba.exception.DuplicateEntryException;
+import com.school.sba.exception.IllegalRequestException;
 import com.school.sba.exception.InvalidUserException;
 import com.school.sba.exception.ScheduleIsAlreadyPresentException;
+import com.school.sba.exception.ScheduleNotExistsException;
 import com.school.sba.exception.ScheduleNotFoundByIdException;
 import com.school.sba.exception.SchoolAlreadyPresentException;
 import com.school.sba.exception.SchoolNotFoundByIDException;
 import com.school.sba.exception.SubjectNotFoundByIdException;
 import com.school.sba.exception.UserNotFoundByIdException;
+import com.school.sba.exception.UserNotFoundbyNameException;
 
 @RestControllerAdvice
 public class ApplicationExceptionHandler extends ResponseEntityExceptionHandler{
@@ -114,7 +119,31 @@ public class ApplicationExceptionHandler extends ResponseEntityExceptionHandler{
 	
 	@ExceptionHandler(UsernameNotFoundException.class)
 	public ResponseEntity<Object> handleUserNotFoundException(UsernameNotFoundException ex){
-		return structure(HttpStatus.FOUND, ex.getMessage(), "Authenticate to load the User");
+		return structure(HttpStatus.NOT_FOUND, ex.getMessage(), "Authenticate to load the User");
+	}
+	
+	@ExceptionHandler(UserNotFoundbyNameException.class)
+	public ResponseEntity<Object> handleUserNotFoundName(UserNotFoundbyNameException ex){
+		return structure(HttpStatus.NOT_FOUND, ex.getMessage(), "Unable to find user By name");
+	}
+	
+	@ExceptionHandler(IllegalRequestException.class)
+	public ResponseEntity<Object> handleIllegalArgument(IllegalRequestException ex){
+		return structure(HttpStatus.BAD_REQUEST, ex.getMessage(), "Illegal Request");
+	}
+	
+	@ExceptionHandler(AcademicProgramNotExistsByIdException.class)
+	public ResponseEntity<Object> handleAcademicProgramNotExist(AcademicProgramNotExistsByIdException ex){
+		return structure(HttpStatus.NOT_FOUND, ex.getMessage(), "");
 	}
 
+	@ExceptionHandler(ScheduleNotExistsException.class)
+	public ResponseEntity<Object> handleScheduleNotExist(ScheduleNotExistsException ex){
+		return structure(HttpStatus.NOT_FOUND, ex.getMessage(), "ScheduleNotExist");
+	}
+
+	@ExceptionHandler(ClasshourNotFoundByIdException.class)
+	public ResponseEntity<Object> handleClassHourNotExist(ClasshourNotFoundByIdException ex){
+		return structure(HttpStatus.NOT_FOUND, ex.getMessage(), "ClassHour Not Exists");
+	}
 }

@@ -1,5 +1,7 @@
 package com.school.sba.controller;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -12,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.school.sba.enums.UserRole;
 import com.school.sba.requestdto.UserRequest;
 import com.school.sba.responsedto.SchoolResponse;
 import com.school.sba.responsedto.UserResponse;
@@ -57,6 +60,11 @@ public class UserController {
 	@PutMapping("subjects/{subjectId}/users/{userId}")
 	public ResponseEntity<ResponseStructure<UserResponse>> addSubjectToTeacher(@PathVariable int userId,@PathVariable int subjectId){
 		return userService.addSubjectToTeacher(userId,subjectId);
+	}
+	
+	@GetMapping("/academic-programs/{programId}/user-roles/{role}/users")
+	public ResponseEntity<ResponseStructure<List<UserResponse>>> findUserbyRoleInProgram(@PathVariable int programId,UserRole userRole){
+		return userService.findUserbyRoleInProgram(programId,userRole);
 	}
 	
 }

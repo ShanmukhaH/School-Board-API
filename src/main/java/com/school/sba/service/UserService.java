@@ -1,7 +1,10 @@
 package com.school.sba.service;
 
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
 
+import com.school.sba.enums.UserRole;
 import com.school.sba.requestdto.UserRequest;
 import com.school.sba.responsedto.UserResponse;
 import com.school.sba.utlity.ResponseStructure;
@@ -20,4 +23,8 @@ public interface UserService {
 
 	ResponseEntity<ResponseStructure<UserResponse>> addOtherUser(UserRequest userRequest);
 
+	ResponseEntity<ResponseStructure<List<UserResponse>>> findUserbyRoleInProgram(int programId, UserRole userRole);
+   
+	void deleteUserPermentaly();
+	
 }

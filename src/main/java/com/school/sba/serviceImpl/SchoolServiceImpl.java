@@ -1,18 +1,24 @@
 package com.school.sba.serviceImpl;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import com.school.sba.entity.AcademicProgram;
 import com.school.sba.entity.School;
 import com.school.sba.entity.User;
 import com.school.sba.enums.UserRole;
 import com.school.sba.exception.AdminiNotFoundByUserRoleException;
 import com.school.sba.exception.DuplicateEntryException;
 import com.school.sba.exception.SchoolAlreadyPresentException;
+import com.school.sba.exception.SchoolNotFoundByIDException;
 import com.school.sba.exception.UserNotFoundByIdException;
+import com.school.sba.repoistory.AcademicProgramRepoistory;
+import com.school.sba.repoistory.ClassHourRepoistory;
 import com.school.sba.repoistory.SchoolRepoistory;
 import com.school.sba.repoistory.UserRepoistory;
 import com.school.sba.requestdto.SchoolRequest;
@@ -28,6 +34,12 @@ public class SchoolServiceImpl implements SchoolService {
 	
 	@Autowired
 	private UserRepoistory userRepoistory;
+	
+	@Autowired
+	private AcademicProgramRepoistory academicProgramRepoistory;
+	
+	@Autowired
+	private ClassHourRepoistory classHourRepoistory;
 	
 	@Autowired
 	private ResponseStructure<SchoolResponse> structure;
@@ -76,6 +88,45 @@ public class SchoolServiceImpl implements SchoolService {
 		}).orElseThrow(()->new UserNotFoundByIdException("Failed to save School"));
 				
 		}
-		
 
+	@Override
+	public ResponseEntity<ResponseStructure<SchoolResponse>> deleteSchool(int schoolId) {
+		
+		School school = schoolRepoistory.findById(schoolId).orElseThrow(()->new SchoolNotFoundByIDException("School not found for given id"));
+		if(school.isDeleted()==false)
+			school.setDeleted(true);
+		schoolRepoistory.save(school);
+		
+		structure.setStatus(HttpStatus.OK.value());
+		structure.setMessage("School Deleted Sucessfully");
+		structure.setData(mapToSchoolResponses(school));
+		
+		return new ResponseEntity<ResponseStructure<SchoolResponse>>(structure,HttpStatus.OK);
+	}
+
+	@Override
+	public void deleteSchoolPermentaly() {
+		List<School> schools = schoolRepoistory.findByisDeletedTrue();
+	
+		if(!schools.isEmpty()) {
+		for(School school:schools) {
+			List<AcademicProgram> programs = academicProgramRepoistory.findBySchool(school);
+			
+			for(AcademicProgram program:programs) {
+				classHourRepoistory.deleteAll(program.getClassHours());
+
+			}
+			academicProgramRepoistory.deleteAllInBatch(programs);
+			
+			List<User> users = userRepoistory.findByUserRoleNot(UserRole.ADMIN);
+			userRepoistory.deleteAllInBatch(users);
+		}
+		User user = userRepoistory.findByUserRole(UserRole.ADMIN);
+		user.setSchool(null);
+		userRepoistory.save(user);
+		
+		schoolRepoistory.deleteAllInBatch(schools);
+	
+	  }	
+	}
 }

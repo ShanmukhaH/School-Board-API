@@ -36,7 +36,7 @@ public class ScheduleServiceImpl implements scheduleService {
 
 
 	public Schedule mapToScheduleRequest(ScheduleRequest scheduleRequest) {
-//		System.out.println(Duration.ofMinutes(scheduleRequest.getClassHourLengthInMinutes())+" "+Duration.ofMinutes(scheduleRequest.getClassHourLengthInMinutes()));
+		//		System.out.println(Duration.ofMinutes(scheduleRequest.getClassHourLengthInMinutes())+" "+Duration.ofMinutes(scheduleRequest.getClassHourLengthInMinutes()));
 		return Schedule.builder()
 				.opensAt(scheduleRequest.getOpensAt())
 				.closesAt(scheduleRequest.getClosesAt())
@@ -51,7 +51,7 @@ public class ScheduleServiceImpl implements scheduleService {
 	}
 
 	public ScheduleResponse mapToScheduleResponse(Schedule schedule) {
-//		System.out.println(schedule.getClassHourLengthInMinutes().toMinutes());
+		//		System.out.println(schedule.getClassHourLengthInMinutes().toMinutes());
 		return ScheduleResponse.builder()
 				.scheduleId(schedule.getScheduleId())
 				.opensAt(schedule.getOpensAt())
@@ -97,13 +97,13 @@ public class ScheduleServiceImpl implements scheduleService {
 				throw new ScheduleNotFoundByIdException("Schedule data Not Found By Id");
 
 		}).orElseThrow(() -> new SchoolNotFoundByIDException("School Data not Found to given Id"));
-		
+
 	}
 
 	@Override
 	public ResponseEntity<ResponseStructure<ScheduleResponse>> updateById(int scheduleId,
 			ScheduleRequest scheduleRequest) {
-		
+
 		return scheduleRepoistory.findById(scheduleId).map(schedule -> {
 			Schedule schedule2 = mapToScheduleRequest(scheduleRequest);
 			schedule2.setScheduleId(schedule.getScheduleId());
@@ -115,7 +115,12 @@ public class ScheduleServiceImpl implements scheduleService {
 			return new ResponseEntity<ResponseStructure<ScheduleResponse>>(structure, HttpStatus.OK);
 
 		}).orElseThrow(() -> new ScheduleNotFoundByIdException("Schedule data Not Found By Id"));
-		
+
+	}
+
+	private Schedule deleteSchedule(Schedule schedule) {
+		scheduleRepoistory.delete(schedule);
+		return schedule;
 	}
 
 
