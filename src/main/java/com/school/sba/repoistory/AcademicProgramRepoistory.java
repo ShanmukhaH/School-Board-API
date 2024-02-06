@@ -12,4 +12,5 @@ public interface AcademicProgramRepoistory extends JpaRepository<AcademicProgram
 
 	List<AcademicProgram> findByisDeletedTrue();
     List<AcademicProgram> findBySchool(School school);
+	List<AcademicProgram> findByAutoRepeatScheduledTrue();
 }

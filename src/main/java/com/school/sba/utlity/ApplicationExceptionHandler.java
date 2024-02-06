@@ -22,6 +22,7 @@ import com.school.sba.exception.AcademicProgramNotFoundById;
 import com.school.sba.exception.AdminCannotAssiginToAcademicProgram;
 import com.school.sba.exception.AdminiNotFoundByUserRoleException;
 import com.school.sba.exception.ClasshourNotFoundByIdException;
+import com.school.sba.exception.DataNotExistException;
 import com.school.sba.exception.DuplicateEntryException;
 import com.school.sba.exception.IllegalRequestException;
 import com.school.sba.exception.InvalidUserException;
@@ -145,5 +146,9 @@ public class ApplicationExceptionHandler extends ResponseEntityExceptionHandler{
 	@ExceptionHandler(ClasshourNotFoundByIdException.class)
 	public ResponseEntity<Object> handleClassHourNotExist(ClasshourNotFoundByIdException ex){
 		return structure(HttpStatus.NOT_FOUND, ex.getMessage(), "ClassHour Not Exists");
+	}
+	@ExceptionHandler(DataNotExistException.class)
+	public ResponseEntity<Object> handleDataNotExist(DataNotExistException ex){
+		return structure(HttpStatus.NOT_FOUND, ex.getMessage(), "Data Not Found ");
 	}
 }

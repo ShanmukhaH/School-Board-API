@@ -185,6 +185,35 @@ public class AcademicProgramServiceImpl implements AcademicProgramService {
 		}
 		}
 	}
+
+	@Override
+	public ResponseEntity<ResponseStructure<AcademicProgramResponse>> setAutoRepeatSchedule(int programId,
+			boolean autoRepeatSchedule) {
+		
+		 return academicProgramRepoistory.findById(programId)
+					.map(program ->{
+						if(!program.isDeleted()) {
+							if(program.getSubjects()==null ||program.getSubjects().isEmpty() 
+							|| program.getClassHours()==null ||program.getClassHours().isEmpty()
+							|| program.getUsers()==null || program.getUsers().isEmpty())
+								throw new IllegalRequestException("Users & Subject & Classhours Data Required To Auto Repeat");
+							
+							program.setAutoRepeatScheduled(autoRepeatSchedule);
+							
+								
+							program.setProgramId(programId);
+							academicProgramRepoistory.save(program);
+							
+							structure.setStatus(HttpStatus.OK.value());
+							structure.setMessage("Auto Repeat Schedule: "+autoRepeatSchedule);
+							structure.setData(mapToAcademicProgramResponse(program));
+						
+							return new ResponseEntity<ResponseStructure<AcademicProgramResponse>>(structure,HttpStatus.OK);  
+						}
+						throw new IllegalRequestException("Program Already DELETED");
+					})
+					.orElseThrow(() -> new AcademicProgramNotExistsByIdException("Failed to ON Auto Repeat Schedule"));
+	}
 }
 
 

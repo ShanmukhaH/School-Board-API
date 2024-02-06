@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.school.sba.enums.UserRole;
@@ -47,6 +48,12 @@ public class AcademicProgramController {
 	@DeleteMapping("/academic-programs/{programId}")
 	public ResponseEntity<ResponseStructure<AcademicProgramResponse>> deletePrograms(@PathVariable int programId){
 		return academicProgramService.deletePrograms(programId);
+	}
+	@PreAuthorize("hasAuthority('ADMIN')")
+	@PutMapping("/academic-program/{programId}")
+	public ResponseEntity<ResponseStructure<AcademicProgramResponse>> setAutoRepeatSchedule(@PathVariable int programId,
+																			@RequestParam("auto-repeat-schedule") boolean autoRepeatSchedule){
+		return academicProgramService.setAutoRepeatSchedule(programId,autoRepeatSchedule);
 	}
  
 }

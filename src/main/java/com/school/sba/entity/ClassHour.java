@@ -31,6 +31,7 @@ public class ClassHour {
 	private int roomNo;
 	@Enumerated(EnumType.STRING)
 	private ClassStatus classStatus;
+	private boolean isDeleted;
 	
 	
 	@ManyToOne

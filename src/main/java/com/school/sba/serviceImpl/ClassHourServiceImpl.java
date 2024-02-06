@@ -1,22 +1,34 @@
 package com.school.sba.serviceImpl;
 
+import java.io.ByteArrayOutputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import com.school.sba.entity.AcademicProgram;
 import com.school.sba.entity.ClassHour;
 import com.school.sba.entity.Schedule;
 import com.school.sba.enums.ClassStatus;
 import com.school.sba.enums.UserRole;
 import com.school.sba.exception.AcademicProgramNotExistsByIdException;
+import com.school.sba.exception.AcademicProgramNotFoundById;
 import com.school.sba.exception.ClasshourNotFoundByIdException;
+import com.school.sba.exception.DataNotExistException;
 import com.school.sba.exception.IllegalRequestException;
 import com.school.sba.exception.ScheduleNotExistsException;
 import com.school.sba.exception.SubjectNotFoundByIdException;
@@ -28,6 +40,7 @@ import com.school.sba.repoistory.SubjectRepoistory;
 import com.school.sba.repoistory.UserRepoistory;
 import com.school.sba.requestdto.ClassHourRequest;
 import com.school.sba.requestdto.ClassHourUpdateRequest;
+import com.school.sba.requestdto.ExcelRequestDto;
 import com.school.sba.responsedto.ClassHourResponses;
 import com.school.sba.service.ClassHourService;
 import com.school.sba.utlity.ResponseStructure;
@@ -63,16 +76,30 @@ public class ClassHourServiceImpl implements ClassHourService {
 				.build();
 	}
 
-	//	public ClassHourResponses mapToClassHourResponses(ClassHour classHour) {
-	//		return ClassHourResponses.builder().
-	//				classHourId(classHour.getClassHourId())
-	//				.beginsAt(classHour.getBeginsAt())
-	//				.endsAt(classHour.getEndsAt())
-	//				.classStatus(classHour.getClassStatus())
-	////				.academics(classHour.getAcademicProgram().getProgramName())
-	//				.build();
-	//		
-	//	}
+//		public ClassHourResponses mapToClassHourResponses(ClassHour classHour) {
+//			return ClassHourResponses.builder().
+//					classHourId(classHour.getClassHourId())
+//					.beginsAt(classHour.getBeginsAt())
+//					.endsAt(classHour.getEndsAt())
+//					.classStatus(classHour.getClassStatus())
+////					.academics(classHour.getAcademicProgram().getProgramName())
+//					.build();
+//			
+//		}
+	
+	private ClassHour mapToNewClassHour(ClassHour existingClassHour) {
+		return ClassHour.builder()
+				.user(existingClassHour.getUser())
+				.academicProgram(existingClassHour.getAcademicProgram())
+				.roomNo(existingClassHour.getRoomNo())
+				.beginsAt(existingClassHour.getBeginsAt().plusDays(7))
+				.endsAt(existingClassHour.getEndsAt().plusDays(7))
+				.classStatus(existingClassHour.getClassStatus())
+				.subject(existingClassHour.getSubject())
+				.build();	
+	}
+	
+	
 
 	public ClassHourResponses ClassHourResponses(ClassHour classhour) {
 		return ClassHourResponses.builder()
@@ -100,9 +127,19 @@ public class ClassHourServiceImpl implements ClassHourService {
 					{
 						List<ClassHour> perDayClasshour = new ArrayList<ClassHour>();
 						LocalDate date = program.getBeginsAt();
-
+						
+						DayOfWeek dayOfWeek = date.getDayOfWeek();
+						int end=6;
+						
+					   if(!dayOfWeek.equals(DayOfWeek.MONDAY)) {
+						   end=end+(7-dayOfWeek.getValue());
+					   }
+					   
 						// for generating day
-						for(int day=1; day<=6; day++) { 
+						for(int day=1; day<=end; day++) { 
+							if(date.getDayOfWeek().equals(DayOfWeek.SUNDAY)) {
+								date.plusDays(1);
+							}
 							LocalTime currentTime = schedule.getOpensAt();
 							LocalDateTime lasthour = null;
 
@@ -206,9 +243,202 @@ public class ClassHourServiceImpl implements ClassHourService {
 		return null;
 
 	}
+	public void generateWeeklyClassHiurs() {
+		List<AcademicProgram> programsToBeAutoRepeated = academicProgramRepoistory.findByAutoRepeatScheduledTrue();		{
+
+			if(!programsToBeAutoRepeated.isEmpty())
+			{
+				programsToBeAutoRepeated.forEach(program->{
+
+
+					int n=program.getSchool().getSchedule().getClassHoursPerDay() * 6;
+					// getting last week class hour
+					List<ClassHour> lastWeekClassHours = classHourRepoistory.findLastNRecordsByAcademicProgram(program, n);
+
+					if(!lastWeekClassHours.isEmpty())
+					{
+						for(int i=lastWeekClassHours.size()-1;i>=0;i--)
+						{
+							ClassHour existClassHour = lastWeekClassHours.get(i);
+							classHourRepoistory.save(mapToNewClassHour(existClassHour));
+
+						}
+
+						System.out.println("this week data generated as per last week data");
+					}
+					System.out.println("No Last week data present");
+				});
+				System.out.println("Schedule Successfully Auto Repeated for the Upcoming WEEK.");
+			}
+			else
+				System.out.println("Auto Repeat Schedule : OFF");
+		}
+	}
 
 	private ClassHour deleteClasshour(ClassHour classHour) {
 		classHourRepoistory.delete(classHour);
 		return classHour;
+	}
+
+
+	@Override
+	public ResponseEntity<ResponseStructure<String>>  writeIntoXlSheet(int programId,ExcelRequestDto excelRequestDto) {
+
+		return academicProgramRepoistory.findById(programId).map(program->{
+			if(!program.isDeleted())
+			{
+				LocalDateTime from=excelRequestDto.getFromDate().atTime(LocalTime.MIDNIGHT);
+				LocalDateTime to=excelRequestDto.getToDate().atTime(LocalTime.MIDNIGHT).plusDays(1);
+				List<ClassHour> classHours = classHourRepoistory.findAllByAcademicProgramAndBeginsAtBetween(program, from, to);
+
+				if(!classHours.isEmpty())
+				{
+					XSSFWorkbook writeBook=new XSSFWorkbook();
+//					Sheet sheet=writeBook.createSheet();
+					org.apache.poi.ss.usermodel.Sheet sheet=writeBook.createSheet();
+					int rowNumber=0;
+					Row header=sheet.createRow(rowNumber);
+					header.createCell(0).setCellValue("Date");
+					header.createCell(1).setCellValue("Begin Time");
+					header.createCell(2).setCellValue("End Time");
+					header.createCell(3).setCellValue("Subject");
+					header.createCell(4).setCellValue("Teacher");
+					header.createCell(5).setCellValue("Room No");
+
+					DateTimeFormatter timeFormatter=DateTimeFormatter.ofPattern("HH-mm");
+					DateTimeFormatter dateFormatter=DateTimeFormatter.ofPattern("YYYY-MM-dd");
+
+
+					for(ClassHour classHour: classHours)
+					{
+						Row row=sheet.createRow(++rowNumber);
+						row.createCell(0).setCellValue(dateFormatter.format(classHour.getBeginsAt()));
+						row.createCell(1).setCellValue(timeFormatter.format(classHour.getBeginsAt()));
+						row.createCell(2).setCellValue(timeFormatter.format(classHour.getEndsAt()));
+
+						if(classHour.getSubject()==null)
+							row.createCell(3).setCellValue("NOT AVAILABLE");
+						else
+							row.createCell(3).setCellValue(classHour.getSubject().getSubjectName());
+
+						if(classHour.getUser()==null)
+							row.createCell(4).setCellValue("NOT AVAILABLE");
+						else
+							row.createCell(4).setCellValue(classHour.getUser().getUserName());
+
+						row.createCell(5).setCellValue(classHour.getRoomNo());	
+					}
+
+					try {
+						writeBook.write(new FileOutputStream(excelRequestDto.getFilePath()+"\\Classhours"+excelRequestDto.getFromDate()+excelRequestDto.getToDate()+".xlsx"));
+					} 
+					catch (IOException e) {
+						e.printStackTrace();
+					}
+
+					ResponseStructure<String> structure=new ResponseStructure<>();
+
+					structure.setStatus(HttpStatus.CREATED.value());
+					structure.setMessage("Excel Sheet Created Successfully");
+					structure.setData("Excel for the program"+programId);
+
+
+
+					return new ResponseEntity<ResponseStructure<String>>(structure,HttpStatus.CREATED);
+
+				}
+				else
+					throw new DataNotExistException("Data Not Present, No class Hours present");
+			}
+			else
+				throw new DataNotExistException("Program  Already Deleted");
+
+		}).orElseThrow(()->new AcademicProgramNotFoundById("Program not present for given program id"));
+
+
+	}
+
+	@Override
+	public ResponseEntity<?> writeToXlSheet(int programId, LocalDate fromDate, LocalDate toDate,
+			MultipartFile multipartFile){
+		
+		return academicProgramRepoistory.findById(programId).map(program->{
+			if(!program.isDeleted())
+			{
+				LocalDateTime from=fromDate.atTime(LocalTime.MIDNIGHT);
+				LocalDateTime to=toDate.atTime(LocalTime.MIDNIGHT).plusDays(1);
+				List<ClassHour> classHours = classHourRepoistory.findAllByAcademicProgramAndBeginsAtBetween(program, from, to);
+				
+				DateTimeFormatter timeFormatter=DateTimeFormatter.ofPattern("HH-mm");
+				DateTimeFormatter dateFormatter=DateTimeFormatter.ofPattern("YYYY-MM-dd");
+				
+				XSSFWorkbook writeBook = null;
+				try {
+					writeBook = new XSSFWorkbook(multipartFile.getInputStream());
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+				if(!classHours.isEmpty())
+				{
+		
+					writeBook.forEach(sheet->{
+						int rowNumber=0;
+						Row header=sheet.createRow(rowNumber);
+						header.createCell(0).setCellValue("Date");
+						header.createCell(1).setCellValue("Begin Time");
+						header.createCell(2).setCellValue("End Time");
+						header.createCell(3).setCellValue("Subject");
+						header.createCell(4).setCellValue("Teacher");
+						header.createCell(5).setCellValue("Room No");
+						
+						
+						for(ClassHour classHour: classHours)
+						{
+							Row row=sheet.createRow(++rowNumber);
+							row.createCell(0).setCellValue(dateFormatter.format(classHour.getBeginsAt()));
+							row.createCell(1).setCellValue(timeFormatter.format(classHour.getBeginsAt()));
+							row.createCell(2).setCellValue(timeFormatter.format(classHour.getEndsAt()));
+
+							if(classHour.getSubject()==null)
+								row.createCell(3).setCellValue("NOT AVAILABLE");
+							else
+								row.createCell(3).setCellValue(classHour.getSubject().getSubjectName());
+
+							if(classHour.getUser()==null)
+								row.createCell(4).setCellValue("NOT AVAILABLE");
+							else
+								row.createCell(4).setCellValue(classHour.getUser().getUserName());
+
+							row.createCell(5).setCellValue(classHour.getRoomNo());	
+						}
+						
+					});
+					ByteArrayOutputStream outputStream=new ByteArrayOutputStream();
+					try {
+						writeBook.write(outputStream);
+						writeBook.close();
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					
+					
+					byte[] byteData = outputStream.toByteArray();
+
+					return ResponseEntity.ok().header("Content Disposition", "attachement; filename="+multipartFile.getOriginalFilename())
+							.contentType(MediaType.APPLICATION_OCTET_STREAM)
+							.body(byteData);
+				}
+				else
+					throw new DataNotExistException("Data Not Present, No class Hours present");
+			}
+			else
+				throw new DataNotExistException("Program  Already Deleted");
+			
+			
+		}).orElseThrow(()->new AcademicProgramNotFoundById("Program not present for given program id"));
+		
 	}
 }
